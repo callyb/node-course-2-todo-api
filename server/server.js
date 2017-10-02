@@ -90,7 +90,7 @@ app.delete("/todos/:id", (req, res) => {
         return res.status(404).send();
       }
       //if doc, send back doc with a 200
-      res.send(todo);
+      res.send({ todo });
     })
     // error
     .catch(e => {
