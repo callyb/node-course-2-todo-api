@@ -1,6 +1,7 @@
 const expect = require("expect");
 const request = require("supertest");
 const { ObjectID } = require("mongodb");
+const _ = require("lodash");
 
 const { app } = require("./../server");
 const { Todo } = require("./../models/todo");
@@ -13,7 +14,9 @@ const todos = [
   },
   {
     _id: new ObjectID(),
-    text: "Second test todo"
+    text: "Second test todo",
+    completed: true,
+    completedAt: 333
   }
 ];
 
@@ -148,6 +151,51 @@ describe("DELETE /todos/:id", () => {
     request(app)
       .delete(`/todos/${123}`)
       .expect(404)
+      .end(done);
+  });
+});
+
+describe("PATCH /todos/:id", () => {
+  it("should update the todo", done => {
+    var text = "Learn mongoose!";
+    // grab id of first item
+    var hexId = todos[0]._id.toHexString();
+    // make patch request, update text, set completed to true//200
+    request(app)
+      .patch(`/todos/${hexId}`)
+      .send({
+        text,
+        completed: true
+      })
+      .expect(200)
+      //custom: response body text is changed, completed is true, completedAt is a number (toBeA)
+      .expect(res => {
+        expect(res.body.todo.text).toBe(text);
+        expect(res.body.todo.completed).toBe(true);
+        expect(res.body.todo.completedAt).toBeA("number");
+      })
+      .end(done);
+  });
+
+  it("should clear completedAt when todo is not completed", done => {
+    var text = "Telephone Ashlea";
+    //grab id of second todo item
+    var hexId = todos[1]._id.toHexString();
+    //update text, set completed to false
+    request(app)
+      .patch(`/todos/${hexId}`)
+      .send({
+        text,
+        completed: false
+      })
+      //200
+      .expect(200)
+      //text is changed, completed false, completedAt is null using .toNotExist
+      .expect(res => {
+        expect(res.body.todo.text).toBe(text);
+        expect(res.body.todo.completed).toBe(false);
+        expect(res.body.todo.completedAt).toNotExist();
+      })
       .end(done);
   });
 });
